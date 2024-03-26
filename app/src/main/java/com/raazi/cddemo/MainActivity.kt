@@ -1,6 +1,7 @@
 package com.raazi.cddemo
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -15,21 +16,28 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.raazi.cddemo.destinations.ProfileViewDestination
+import com.raazi.cddemo.destinations.ReturnBooleanDestination
 import com.raazi.cddemo.ui.theme.CDDemoTheme
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.EmptyResultBackNavigator
+import com.ramcosta.composedestinations.result.EmptyResultRecipient
+import com.ramcosta.composedestinations.result.NavResult
 import com.ramcosta.composedestinations.result.ResultBackNavigator
+import com.ramcosta.composedestinations.result.ResultRecipient
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,7 +58,24 @@ class MainActivity : ComponentActivity() {
 @RootNavGraph(start = true)
 @Destination
 @Composable
-fun HomeView(navigator: DestinationsNavigator){
+fun HomeView(navigator: DestinationsNavigator,
+             resultRecipient: ResultRecipient<ReturnBooleanDestination, Boolean>){
+    var confirm by remember{
+        mutableStateOf("the result of dialog is ")
+    }
+    var context = LocalContext.current
+
+
+    resultRecipient.onNavResult {
+        when (it){
+            is NavResult.Canceled -> {
+                Toast.makeText(context, "Dialog Dismissed by user", Toast.LENGTH_SHORT).show()
+            }
+            is NavResult.Value -> {
+                confirm = confirm.plus("${it.value}")
+            }
+        }
+    }
 
     Column(modifier  = Modifier
         .fillMaxSize()
@@ -63,6 +88,10 @@ fun HomeView(navigator: DestinationsNavigator){
         Button(onClick = {navigator.navigate(ProfileViewDestination(text.value))}) {
             Text(text ="Goto Next Screen" )
         }
+        Button(onClick = {navigator.navigate(ReturnBooleanDestination)}) {
+            Text(text ="Goto dialog" )
+        }
+        Text(text = confirm)
     }
 }
 @Destination
